@@ -34,7 +34,7 @@ fn add_converted_schema(definitions: &mut HashMap<String, String>, id: String, s
 
   let Some(generated) = convert_schema_object_to_zod(schema) else { return; };
 
-  rv.push_str(&format!("const {id} = {generated};\n"));
+  rv.push_str(&format!("export const {id} = {generated};\n"));
   rv.push_str(&format!("export type {id} = z.infer<typeof {id}>;\n"));
 
   definitions.insert(id, rv);

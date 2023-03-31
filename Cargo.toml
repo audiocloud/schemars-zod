@@ -3,6 +3,7 @@ name = "schamars-zod"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "A few functions to aid Zod schema generation from rust types annotated with schemars"
 
 [dependencies.schemars]
 version = "0.8"
