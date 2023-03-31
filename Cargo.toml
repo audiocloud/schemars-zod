@@ -2,10 +2,7 @@
 name = "schamars-zod"
 version = "0.1.0"
 edition = "2021"
-
-[dependencies]
-askama = "0.12"
-serde = "1"
+license = "MIT"
 
 [dependencies.schemars]
 version = "0.8"
