@@ -22,6 +22,12 @@ use schemars::schema::{ArrayValidation, InstanceType, ObjectValidation, RootSche
 /// ```
 /// use schemars::schema_for;
 /// use schamars_zod::merge_schemas;
+///
+/// #[derive(schemars::JsonSchema)]
+/// struct MyStruct {/* ... */}
+///
+///#[derive(schemars::JsonSchema)]
+/// struct MyOtherStruct {/* ... */}
 /// let merged = merge_schemas(vec![schema_for!(MyStruct), schema_for!(MyOtherStruct)].into_iter());
 /// ```
 pub fn merge_schemas(schemas: impl Iterator<Item=RootSchema>) -> RootSchema {
@@ -55,6 +61,13 @@ pub fn merge_schemas(schemas: impl Iterator<Item=RootSchema>) -> RootSchema {
 /// ```
 /// use schemars::schema_for;
 /// use schamars_zod::{convert, merge_schemas};
+///
+/// #[derive(schemars::JsonSchema)]
+/// struct MyStruct {/* ... */}
+///
+///#[derive(schemars::JsonSchema)]
+/// struct MyOtherStruct {/* ... */}
+///
 /// let converted = convert(merge_schemas(vec![schema_for!(MyStruct), schema_for!(MyOtherStruct)].into_iter()));
 /// ```
 pub fn convert(schema: RootSchema) -> HashMap::<String, String> {
