@@ -3,6 +3,27 @@ use std::collections::HashMap;
 
 use schemars::schema::{ArrayValidation, InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec};
 
+/// Merge multiple [schemars::schema::RootSchema] into a single [schemars::schema::RootSchema].
+///
+/// Schemars macro [schemars::schema_for!] will always generate a RootSchema. This works if each
+/// type is independently processed. In ZOD schemas however, it's a common practice to define all
+/// types in a single file, and then import them as needed. This function will merge multiple
+/// results of the `schema_for!` macro into a single RootSchema, simplifying multiple definitions
+/// of the same schema.
+///
+/// # Arguments
+///
+/// * `schemas`: An iterator of RootSchema's to merge. BYOI (Bring Your Own Iterator)
+///
+/// returns: RootSchema - A single RootSchema containing all definitions from the input schemas.
+///
+/// # Examples
+///
+/// ```
+/// use schemars::schema_for;
+/// use schamars_zod::merge_schemas;
+/// let merged = merge_schemas(vec![schema_for!(MyStruct), schema_for!(MyOtherStruct)].into_iter());
+/// ```
 pub fn merge_schemas(schemas: impl Iterator<Item=RootSchema>) -> RootSchema {
   let mut merged = RootSchema::default();
   for schema in schemas {
@@ -19,14 +40,31 @@ pub fn merge_schemas(schemas: impl Iterator<Item=RootSchema>) -> RootSchema {
   merged
 }
 
-pub fn convert(schema: RootSchema) -> String {
-  let mut definitions = HashMap::<String, String>::new();
+/// Convert a [schemars::schema::RootSchema] to a HashMap of stringified ZOD schemas.
+///
+/// Only definitions inside the RootSchema will be converted, the root schema itself will be ignored.
+///
+/// # Arguments
+///
+/// * `schema`: Schema to convert
+///
+/// returns: HashMap<String, String> - A HashMap of stringified ZOD schemas, keyed by the definition name.
+///
+/// # Examples
+///
+/// ```
+/// use schemars::schema_for;
+/// use schamars_zod::{convert, merge_schemas};
+/// let converted = convert(merge_schemas(vec![schema_for!(MyStruct), schema_for!(MyOtherStruct)].into_iter()));
+/// ```
+pub fn convert(schema: RootSchema) -> HashMap::<String, String> {
+  let mut definitions = HashMap::new();
 
   for (id, definition) in schema.definitions {
     add_converted_schema(&mut definitions, id, definition.into_object());
   }
 
-  definitions.into_values().collect::<Vec<_>>().join("\n")
+  definitions
 }
 
 fn add_converted_schema(definitions: &mut HashMap<String, String>, id: String, schema: SchemaObject) {
