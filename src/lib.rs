@@ -1,5 +1,5 @@
 //! convert JsonSchema to ZOD schema
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 
 use schemars::schema::{
     ArrayValidation, InstanceType, ObjectValidation, RootSchema, Schema, SchemaObject, SingleOrVec,
@@ -35,12 +35,12 @@ use schemars::schema::{
 pub fn merge_schemas(schemas: impl Iterator<Item = RootSchema>) -> RootSchema {
     let mut merged = RootSchema::default();
     for schema in schemas {
-        let Some(id) = schema.schema.metadata.as_ref().and_then(|m| m.title.as_ref())
-      else { continue; };
-
         for (id, definition) in schema.definitions {
             merged.definitions.insert(id, definition);
         }
+
+        let Some(id) = schema.schema.metadata.as_ref().and_then(|m| m.title.as_ref())
+        else { continue; };
 
         merged
             .definitions
@@ -58,7 +58,7 @@ pub fn merge_schemas(schemas: impl Iterator<Item = RootSchema>) -> RootSchema {
 ///
 /// * `schema`: Schema to convert
 ///
-/// returns: HashMap<String, String> - A HashMap of stringified ZOD schemas, keyed by the definition name.
+/// returns: BTreeMap<String, String> - A BTreeMap of stringified ZOD schemas, keyed by the definition name.
 ///
 /// # Examples
 ///
@@ -74,29 +74,27 @@ pub fn merge_schemas(schemas: impl Iterator<Item = RootSchema>) -> RootSchema {
 ///
 /// let converted = convert(merge_schemas(vec![schema_for!(MyStruct), schema_for!(MyOtherStruct)].into_iter()));
 /// ```
-pub fn convert(schema: RootSchema) -> HashMap<String, String> {
-    let mut definitions = HashMap::new();
+pub fn convert(schema: RootSchema) -> BTreeMap<String, String> {
+    let mut definitions = BTreeMap::new();
 
     for (id, definition) in schema.definitions {
-        add_converted_schema(&mut definitions, id, definition.into_object());
+        if let Some(definition) = add_converted_schema(&id, definition.into_object()) {
+            definitions.insert(id, definition);
+        }
     }
 
     definitions
 }
 
-fn add_converted_schema(
-    definitions: &mut HashMap<String, String>,
-    id: String,
-    schema: SchemaObject,
-) {
+fn add_converted_schema(id: &str, schema: SchemaObject) -> Option<String> {
     let mut rv = String::new();
 
-    let Some(generated) = convert_schema_object_to_zod(schema) else { return; };
+    let Some(generated) = convert_schema_object_to_zod(schema) else { panic!("could not generate {id}"); };
 
     rv.push_str(&format!("export const {id} = {generated};\n"));
     rv.push_str(&format!("export type {id} = z.infer<typeof {id}>;\n"));
 
-    definitions.insert(id, rv);
+    Some(rv)
 }
 
 fn convert_schema_object_to_zod(schema: SchemaObject) -> Option<String> {
@@ -129,7 +127,15 @@ fn convert_schema_object_to_zod(schema: SchemaObject) -> Option<String> {
     }
 
     // handle tagged / untagged unions
-    if let Some(one_of) = schema.subschemas.as_ref().and_then(|x| x.one_of.as_ref()) {
+    let one_of = schema.subschemas.as_ref().and_then(|x| x.one_of.as_ref());
+    let any_of = schema.subschemas.as_ref().and_then(|x| x.any_of.as_ref());
+    let all_of = schema.subschemas.as_ref().and_then(|x| x.all_of.as_ref());
+
+    if let Some(one_of) = one_of.or(any_of).or(all_of) {
+        if one_of.len() == 1 {
+            return convert_schema_object_to_zod(one_of.first().unwrap().clone().into_object());
+        }
+
         let mut rv = if let Some(field) = all_schemas_share_a_field(one_of) {
             format!("z.discriminatedUnion('{field}', [")
         } else {
@@ -145,7 +151,10 @@ fn convert_schema_object_to_zod(schema: SchemaObject) -> Option<String> {
         return Some(rv);
     }
 
-    let Some(instance_type) = schema.instance_type.as_ref() else { return None; };
+    let Some(instance_type) = schema.instance_type.as_ref() else {
+        eprintln!("problematic schema {schema:#?}");
+        return None;
+    };
 
     convert_schema_type_to_zod(instance_type, &schema)
 }
@@ -176,11 +185,11 @@ fn all_schemas_share_a_field(any_of: &[Schema]) -> Option<String> {
             .collect::<HashSet<_>>();
 
         if found.contains("type") {
-          Some("type".to_owned())
+            Some("type".to_owned())
         } else if found.contains("kind") {
-          Some("kind".to_owned())
+            Some("kind".to_owned())
         } else {
-          found.iter().next().map(|x| x.to_owned())
+            found.iter().next().map(|x| x.to_owned())
         }
     })
 }
@@ -228,7 +237,7 @@ fn convert_single_instance_type_schema_to_zod(
 
 fn convert_array_type_to_zod(
     array_type: &Box<ArrayValidation>,
-    schema: &SchemaObject,
+    _schema: &SchemaObject,
 ) -> Option<String> {
     let Some(items) = array_type.items.as_ref() else { return None; };
 
@@ -270,7 +279,7 @@ fn convert_schema_or_ref_to_zod(schema: &SingleOrVec<Schema>, zod_mode: &str) ->
 
 fn convert_object_type_to_zod(
     object_type: &Box<ObjectValidation>,
-    schema: &SchemaObject,
+    _schema: &SchemaObject,
 ) -> Option<String> {
     let mut rv = String::new();
 
