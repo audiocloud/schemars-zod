@@ -4,6 +4,9 @@ version = "0.1.1"
 edition = "2021"
 license = "MIT"
 description = "A few functions to aid Zod schema generation from rust types annotated with schemars"
+homepage = "https://docs.rs/schemars-zod"
+documentation = "https://docs.rs/schemars-zod"
+repository = "https://github.com/audiocloud/schemars-zod"
 
 [dependencies.schemars]
 version = "0.8"
