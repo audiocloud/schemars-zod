@@ -27,5 +27,5 @@ fn main() {
   println!("{}", serde_json::to_string_pretty(&merged).unwrap());
 
   let converted = convert(merged);
-  println!("{}", converted);
+  println!("{}", converted.into_values().collect::<Vec<_>>().join("\n"));
 }
