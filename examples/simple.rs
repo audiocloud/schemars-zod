@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use schemars::{JsonSchema, schema_for};
 
-use schamars_zod::{convert, merge_schemas};
+use schemars_zod::{convert, merge_schemas};
 
 fn main() {
   #[derive(schemars::JsonSchema)]

@@ -23,7 +23,7 @@ use schemars::schema::{
 ///
 /// ```
 /// use schemars::schema_for;
-/// use schamars_zod::merge_schemas;
+/// use schemars_zod::merge_schemas;
 ///
 /// #[derive(schemars::JsonSchema)]
 /// struct MyStruct {/* ... */}
@@ -64,7 +64,7 @@ pub fn merge_schemas(schemas: impl Iterator<Item = RootSchema>) -> RootSchema {
 ///
 /// ```
 /// use schemars::schema_for;
-/// use schamars_zod::{convert, merge_schemas};
+/// use schemars_zod::{convert, merge_schemas};
 ///
 /// #[derive(schemars::JsonSchema)]
 /// struct MyStruct {/* ... */}
