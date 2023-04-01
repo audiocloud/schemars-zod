@@ -1,11 +1,11 @@
 [package]
-name = "schamars-zod"
+name = "schemars-zod"
 version = "0.1.2"
 edition = "2021"
 license = "MIT"
 description = "A few functions to aid Zod schema generation from rust types annotated with schemars"
-homepage = "https://lib.rs/crates/schamars-zod"
-documentation = "https://docs.rs/schamars-zod/latest/schamars_zod"
+homepage = "https://lib.rs/crates/schemars-zod"
+documentation = "https://docs.rs/schamars-zod/latest/schemars_zod"
 repository = "https://github.com/audiocloud/schemars-zod"
 
 [dependencies.schemars]
