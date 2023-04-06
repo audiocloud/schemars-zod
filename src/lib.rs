@@ -91,8 +91,8 @@ fn add_converted_schema(id: &str, schema: SchemaObject) -> Option<String> {
 
     let Some(generated) = convert_schema_object_to_zod(schema) else { panic!("could not generate {id}"); };
 
-    rv.push_str(&format!("export const {id} = {generated};\n"));
-    rv.push_str(&format!("export type {id} = z.infer<typeof {id}>;\n"));
+    rv.push_str(&format!("export const {id} = memoizeOne(() => {generated});\n"));
+    rv.push_str(&format!("export type {id} = z.infer<ReturnType<typeof {id}>>;\n"));
 
     Some(rv)
 }
@@ -101,7 +101,7 @@ fn convert_schema_object_to_zod(schema: SchemaObject) -> Option<String> {
     // handle references
     if let Some(reference) = schema.reference.as_ref() {
         let reference = reference.replace("#/definitions/", "");
-        return Some(format!("z.lazy(() => {reference})"));
+        return Some(format!("z.lazy({reference})"));
     }
 
     // handle ordinary value disjoint unions / enums
@@ -152,8 +152,8 @@ fn convert_schema_object_to_zod(schema: SchemaObject) -> Option<String> {
     }
 
     let Some(instance_type) = schema.instance_type.as_ref() else {
-        eprintln!("problematic schema {schema:#?}");
-        return None;
+        // eprintln!("problematic schema {schema:#?}");
+        return Some("z.any()".to_string());
     };
 
     convert_schema_type_to_zod(instance_type, &schema)
